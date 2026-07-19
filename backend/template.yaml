@@ -4,7 +4,7 @@ Description: ecommerce-demo backend - API Gateway + Lambda + DynamoDB
 
 Globals:
   Function:
-    Runtime: nodejs20.x
+    Runtime: nodejs22.x
     Timeout: 10
     MemorySize: 256
     Environment:

@@ -16,7 +16,7 @@ This backend uses API Gateway (HTTP API), Lambda, and DynamoDB.
 
 - AWS CLI configured
 - AWS SAM CLI installed
-- Node.js 20+
+- Node.js 22+
 
 ## Deploy
 

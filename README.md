@@ -7,7 +7,7 @@ React storefront deployed on AWS Amplify Hosting, backed by AWS API Gateway + La
 - Frontend: React + TypeScript + Vite
 - Frontend Hosting: AWS Amplify Hosting
 - API: API Gateway HTTP API
-- Compute: AWS Lambda (Node.js)
+- Compute: AWS Lambda (Node.js 22)
 - Database: DynamoDB (Products, Carts, Orders)
 
 ## Project Structure
