@@ -1,0 +1,14 @@
+{
+  "name": "ecommerce-demo-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "seed": "node scripts/seed-products.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.879.0",
+    "@aws-sdk/lib-dynamodb": "^3.879.0"
+  }
+}

@@ -1,0 +1,132 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ecommerce-demo backend - API Gateway + Lambda + DynamoDB
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 10
+    MemorySize: 256
+    Environment:
+      Variables:
+        PRODUCTS_TABLE: !Ref ProductsTable
+        CARTS_TABLE: !Ref CartsTable
+        ORDERS_TABLE: !Ref OrdersTable
+
+Resources:
+  EcommerceApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - OPTIONS
+        AllowOrigins:
+          - '*'
+        AllowHeaders:
+          - '*'
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/app.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProductsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CartsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrdersTable
+      Events:
+        GetProducts:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref EcommerceApi
+            Path: /products
+            Method: GET
+        GetProductById:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref EcommerceApi
+            Path: /products/{id}
+            Method: GET
+        GetCart:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref EcommerceApi
+            Path: /cart/{sessionId}
+            Method: GET
+        AddToCart:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref EcommerceApi
+            Path: /cart/{sessionId}
+            Method: POST
+        RemoveFromCart:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref EcommerceApi
+            Path: /cart/{sessionId}/{productId}
+            Method: DELETE
+        Checkout:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref EcommerceApi
+            Path: /checkout
+            Method: POST
+        GetOrderById:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref EcommerceApi
+            Path: /orders/{orderId}
+            Method: GET
+
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  CartsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: sessionId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: sessionId
+          KeyType: HASH
+
+  OrdersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: orderId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: orderId
+          KeyType: HASH
+
+Outputs:
+  ApiBaseUrl:
+    Description: Base URL for deployed API
+    Value: !Sub https://${EcommerceApi}.execute-api.${AWS::Region}.amazonaws.com
+
+  ProductsTableName:
+    Value: !Ref ProductsTable
+
+  CartsTableName:
+    Value: !Ref CartsTable
+
+  OrdersTableName:
+    Value: !Ref OrdersTable
