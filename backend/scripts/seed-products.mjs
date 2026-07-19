@@ -413,16 +413,28 @@ const products = [
   },
 ]
 
-await ddb.send(
-  new BatchWriteCommand({
-    RequestItems: {
-      [productsTable]: products.map((item) => ({
-        PutRequest: {
-          Item: item,
-        },
-      })),
-    },
-  }),
-)
+const CHUNK_SIZE = 25
+
+for (let i = 0; i < products.length; i += CHUNK_SIZE) {
+  const chunk = products.slice(i, i + CHUNK_SIZE)
+  let requestItems = {
+    [productsTable]: chunk.map((item) => ({
+      PutRequest: {
+        Item: item,
+      },
+    })),
+  }
+
+  // Retry unprocessed items until DynamoDB accepts the full chunk.
+  while (Object.keys(requestItems).length > 0) {
+    const result = await ddb.send(
+      new BatchWriteCommand({
+        RequestItems: requestItems,
+      }),
+    )
+
+    requestItems = result.UnprocessedItems ?? {}
+  }
+}
 
 console.log(`Seeded ${products.length} products into ${productsTable}.`)
