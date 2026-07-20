@@ -36,6 +36,22 @@
   gap: 0.8rem;
 }
 
+.hero-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cart-trigger {
+  border: none;
+  border-radius: 999px;
+  background: #0f7760;
+  color: #fff;
+  padding: 0.6rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .hero-stats article {
   border-radius: 16px;
   border: 1px solid #d8dccf;
@@ -59,6 +75,10 @@
   grid-template-columns: 2fr 1fr;
   gap: 1rem;
   padding: 1rem;
+}
+
+.route-grid {
+  display: block;
 }
 
 .catalog-panel,
@@ -229,6 +249,77 @@
   cursor: not-allowed;
 }
 
+.text-button {
+  border: none;
+  background: transparent;
+  color: #0f7760;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout-page,
+.order-page {
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 1rem;
+}
+
+.checkout-list {
+  max-height: 420px;
+}
+
+.checkout-summary {
+  max-width: 320px;
+}
+
+.checkout-empty {
+  border: 1px dashed #d7dfd2;
+  border-radius: 14px;
+  padding: 1rem;
+  background: #fbfdf8;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.checkout-empty h3,
+.checkout-empty p {
+  margin: 0;
+}
+
+.checkout-empty button,
+.order-card button {
+  justify-self: start;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #e25b2e, #f68d34);
+  color: #fff;
+  padding: 0.45rem 0.78rem;
+  font-weight: 700;
+}
+
+.order-card {
+  max-width: 500px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 37, 41, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 40;
+  padding: 1rem;
+}
+
+.modal-panel {
+  width: min(520px, 100%);
+  max-height: calc(100svh - 2rem);
+  overflow: auto;
+  box-shadow: 0 20px 45px rgba(8, 18, 23, 0.3);
+}
+
 .order-success {
   margin-top: 0.8rem;
   border: 1px dashed #0f7760;
@@ -294,6 +385,14 @@
 
   .hero-stats {
     grid-template-columns: repeat(3, minmax(70px, 1fr));
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
+  }
+
+  .checkout-summary {
+    max-width: unset;
   }
 
   .footnote {

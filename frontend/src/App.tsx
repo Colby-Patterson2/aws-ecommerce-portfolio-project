@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import {
   addToCart,
   checkout,
@@ -7,6 +8,10 @@ import {
   isMockMode,
   removeFromCart,
 } from './api'
+import CartModal from './components/CartModal'
+import CatalogPanel from './components/CatalogPanel'
+import CheckoutPage from './components/CheckoutPage'
+import OrderConfirmationPage from './components/OrderConfirmationPage'
 import type { Cart, Order, Product } from './types'
 import './App.css'
 
@@ -24,6 +29,8 @@ function getSessionId(): string {
 }
 
 function App() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [sessionId] = useState(getSessionId)
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<Cart>({ sessionId, items: [], updatedAt: '' })
@@ -32,6 +39,7 @@ function App() {
   const [error, setError] = useState('')
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null)
+  const [isCartOpen, setIsCartOpen] = useState(false)
 
   const productById = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
@@ -80,6 +88,7 @@ function App() {
 
   async function handleAddToCart(product: Product) {
     try {
+      setError('')
       const updatedCart = await addToCart(sessionId, {
         productId: product.id,
         qty: 1,
@@ -93,6 +102,7 @@ function App() {
 
   async function handleRemoveFromCart(productId: string) {
     try {
+      setError('')
       const updatedCart = await removeFromCart(sessionId, productId)
       setCart(updatedCart)
     } catch (removeError) {
@@ -104,10 +114,13 @@ function App() {
 
   async function handleCheckout() {
     try {
+      setError('')
       setIsCheckingOut(true)
       const order = await checkout(sessionId)
       setConfirmedOrder(order)
       setCart({ sessionId, items: [], updatedAt: new Date().toISOString() })
+      setIsCartOpen(false)
+      navigate(`/order/${order.orderId}`, { state: { order } })
     } catch (checkoutError) {
       setError(
         checkoutError instanceof Error
@@ -118,6 +131,24 @@ function App() {
       setIsCheckingOut(false)
     }
   }
+
+  function handleGoToCheckout() {
+    setIsCartOpen(false)
+    navigate('/checkout')
+  }
+
+  function handleBackToCatalog() {
+    setIsCartOpen(false)
+    navigate('/')
+  }
+
+  const orderFromRoute =
+    location.pathname.startsWith('/order/') &&
+    typeof location.state === 'object' &&
+    location.state !== null &&
+    'order' in location.state
+      ? ((location.state as { order?: Order }).order ?? confirmedOrder)
+      : confirmedOrder
 
   return (
     <div className="app-shell">
@@ -144,101 +175,62 @@ function App() {
             <p>API Mode</p>
           </article>
         </div>
+        <div className="hero-actions">
+          <button type="button" className="cart-trigger" onClick={() => setIsCartOpen(true)}>
+            Cart ({cart.items.reduce((sum, item) => sum + item.qty, 0)})
+          </button>
+        </div>
       </header>
 
       {error && <p className="error-banner">{error}</p>}
 
-      <main className="content-grid">
-        <section className="catalog-panel">
-          <div className="panel-head">
-            <h2>Catalog</h2>
-            <div className="category-row" role="tablist" aria-label="Filter products">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  className={selectedCategory === category ? 'chip active' : 'chip'}
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {isLoading ? (
-            <p className="status">Loading products...</p>
-          ) : (
-            <div className="product-grid">
-              {visibleProducts.map((product) => (
-                <article className="product-card" key={product.id}>
-                  <img src={product.imageUrl} alt={product.name} loading="lazy" />
-                  <div className="card-body">
-                    <p className="category">{product.category}</p>
-                    <h3>{product.name}</h3>
-                    <p>{product.description}</p>
-                    <div className="card-footer">
-                      <strong>${product.price}</strong>
-                      <button type="button" onClick={() => handleAddToCart(product)}>
-                        Add to Cart
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <aside className="cart-panel">
-          <div className="panel-head">
-            <h2>Cart</h2>
-            <p>{cart.items.length} item types</p>
-          </div>
-
-          <ul className="cart-list">
-            {cart.items.map((item) => {
-              const product = productById.get(item.productId)
-              return (
-                <li key={item.productId}>
-                  <div>
-                    <h3>{product?.name ?? item.productId}</h3>
-                    <p>
-                      Qty {item.qty} · ${item.price} each
-                    </p>
-                  </div>
-                  <button type="button" onClick={() => handleRemoveFromCart(item.productId)}>
-                    Remove
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-
-          {cart.items.length === 0 && <p className="status">Your cart is currently empty.</p>}
-
-          <div className="checkout-box">
-            <p>Total</p>
-            <h3>${cartTotal.toFixed(2)}</h3>
-            <button
-              type="button"
-              onClick={handleCheckout}
-              disabled={cart.items.length === 0 || isCheckingOut}
-            >
-              {isCheckingOut ? 'Processing...' : 'Simulate Checkout'}
-            </button>
-          </div>
-
-          {confirmedOrder && (
-            <div className="order-success">
-              <h3>Order Confirmed</h3>
-              <p>Order ID: {confirmedOrder.orderId}</p>
-              <p>Status: {confirmedOrder.status}</p>
-              <p>Total: ${confirmedOrder.total.toFixed(2)}</p>
-            </div>
-          )}
-        </aside>
+      <main className="content-grid route-grid">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <CatalogPanel
+                categories={categories}
+                selectedCategory={selectedCategory}
+                isLoading={isLoading}
+                visibleProducts={visibleProducts}
+                onSelectCategory={setSelectedCategory}
+                onAddToCart={handleAddToCart}
+              />
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <CheckoutPage
+                cart={cart}
+                cartTotal={cartTotal}
+                productById={productById}
+                isCheckingOut={isCheckingOut}
+                onRemove={handleRemoveFromCart}
+                onPlaceOrder={handleCheckout}
+                onContinueShopping={handleBackToCatalog}
+              />
+            }
+          />
+          <Route
+            path="/order/:orderId"
+            element={<OrderConfirmationPage order={orderFromRoute} onBackToCatalog={handleBackToCatalog} />}
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
+
+      <CartModal
+        isOpen={isCartOpen}
+        cart={cart}
+        cartTotal={cartTotal}
+        productById={productById}
+        onClose={() => setIsCartOpen(false)}
+        onRemove={handleRemoveFromCart}
+        onGoToCheckout={handleGoToCheckout}
+      />
+
       <footer className="footnote">
         <p>Session: {sessionId}</p>
         <p>{isMockMode() ? 'Using local mock API mode.' : 'Connected to live AWS API.'}</p>

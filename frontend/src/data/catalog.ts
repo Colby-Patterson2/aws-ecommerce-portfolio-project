@@ -7,7 +7,7 @@ export const catalog: Product[] = [
     description: 'Weather-ready 28L daypack with hidden laptop sleeve and reinforced straps.',
     price: 89,
     imageUrl:
-      'https://images.unsplash.com/photo-1504274066651-8d31a536b11a?auto=format&fit=crop&w=900&q=80',
+      'https://d3ama07cq01ab6.cloudfront.net/products/p001.png',
     stock: 21,
     category: 'Bags',
   },
