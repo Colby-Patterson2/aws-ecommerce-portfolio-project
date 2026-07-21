@@ -112,6 +112,9 @@
   overflow: hidden;
   background: #fffef8;
   animation: rise 450ms ease both;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .product-card img {
@@ -122,6 +125,9 @@
 
 .card-body {
   padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .card-body h3 {
@@ -143,7 +149,7 @@
 }
 
 .card-footer {
-  margin-top: 0.6rem;
+  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
