@@ -165,6 +165,10 @@
   font-weight: 700;
 }
 
+.card-footer button.added-state {
+  background: linear-gradient(135deg, #1b876f, #2fa778);
+}
+
 .cart-list {
   list-style: none;
   padding: 0;

@@ -7,6 +7,7 @@ type CatalogPanelProps = {
   visibleProducts: Product[]
   onSelectCategory: (category: string) => void
   onAddToCart: (product: Product) => void
+  addedProductIds: ReadonlySet<string>
 }
 
 export default function CatalogPanel({
@@ -16,6 +17,7 @@ export default function CatalogPanel({
   visibleProducts,
   onSelectCategory,
   onAddToCart,
+  addedProductIds,
 }: CatalogPanelProps) {
   return (
     <section className="catalog-panel">
@@ -53,8 +55,12 @@ export default function CatalogPanel({
                 <p>{product.description}</p>
                 <div className="card-footer">
                   <strong>${product.price}</strong>
-                  <button type="button" onClick={() => onAddToCart(product)}>
-                    Add to Cart
+                  <button
+                    type="button"
+                    className={addedProductIds.has(product.id) ? 'added-state' : undefined}
+                    onClick={() => onAddToCart(product)}
+                  >
+                    {addedProductIds.has(product.id) ? 'Added' : 'Add to Cart'}
                   </button>
                 </div>
               </div>

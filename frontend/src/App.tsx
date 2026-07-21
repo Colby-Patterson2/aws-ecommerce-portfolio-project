@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import {
   addToCart,
   checkout,
   getCart,
   getProducts,
-  isMockMode,
   removeFromCart,
 } from './api'
 import CartModal from './components/CartModal'
@@ -16,6 +15,7 @@ import type { Cart, Order, Product } from './types'
 import './App.css'
 
 const SESSION_KEY = 'ecommerce-demo-session'
+const ADDED_LABEL_DURATION_MS = 3000
 
 function getSessionId(): string {
   const saved = localStorage.getItem(SESSION_KEY)
@@ -40,6 +40,8 @@ function App() {
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null)
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [addedProductIds, setAddedProductIds] = useState<Set<string>>(() => new Set())
+  const addedLabelTimersRef = useRef<Map<string, number>>(new Map())
 
   const productById = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
@@ -86,6 +88,15 @@ function App() {
     loadData()
   }, [sessionId])
 
+  useEffect(() => {
+    return () => {
+      for (const timerId of addedLabelTimersRef.current.values()) {
+        window.clearTimeout(timerId)
+      }
+      addedLabelTimersRef.current.clear()
+    }
+  }, [])
+
   async function handleAddToCart(product: Product) {
     try {
       setError('')
@@ -95,6 +106,32 @@ function App() {
         price: product.price,
       })
       setCart(updatedCart)
+
+      setAddedProductIds((previous) => {
+        const next = new Set(previous)
+        next.add(product.id)
+        return next
+      })
+
+      const existingTimer = addedLabelTimersRef.current.get(product.id)
+      if (existingTimer !== undefined) {
+        window.clearTimeout(existingTimer)
+      }
+
+      const timerId = window.setTimeout(() => {
+        setAddedProductIds((previous) => {
+          if (!previous.has(product.id)) {
+            return previous
+          }
+
+          const next = new Set(previous)
+          next.delete(product.id)
+          return next
+        })
+        addedLabelTimersRef.current.delete(product.id)
+      }, ADDED_LABEL_DURATION_MS)
+
+      addedLabelTimersRef.current.set(product.id, timerId)
     } catch (addError) {
       setError(addError instanceof Error ? addError.message : 'Failed to add item.')
     }
@@ -182,6 +219,7 @@ function App() {
                 visibleProducts={visibleProducts}
                 onSelectCategory={setSelectedCategory}
                 onAddToCart={handleAddToCart}
+                addedProductIds={addedProductIds}
               />
             }
           />
