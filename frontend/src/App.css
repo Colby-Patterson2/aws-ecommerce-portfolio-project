@@ -30,12 +30,6 @@
   color: #3c4748;
 }
 
-.hero-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(100px, 1fr));
-  gap: 0.8rem;
-}
-
 .hero-actions {
   grid-column: 1 / -1;
   display: flex;
@@ -50,24 +44,6 @@
   padding: 0.6rem 1rem;
   font-weight: 700;
   cursor: pointer;
-}
-
-.hero-stats article {
-  border-radius: 16px;
-  border: 1px solid #d8dccf;
-  background: rgba(255, 255, 255, 0.78);
-  padding: 1rem;
-  text-align: center;
-}
-
-.hero-stats h2,
-.hero-stats p {
-  margin: 0;
-}
-
-.hero-stats h2 {
-  font-family: var(--display);
-  font-size: 1.6rem;
 }
 
 .content-grid {

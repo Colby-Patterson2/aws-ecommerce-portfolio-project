@@ -161,20 +161,6 @@ function App() {
             Lambda, and DynamoDB.
           </p>
         </div>
-        <div className="hero-stats">
-          <article>
-            <h2>{products.length}</h2>
-            <p>Products</p>
-          </article>
-          <article>
-            <h2>{cart.items.reduce((sum, item) => sum + item.qty, 0)}</h2>
-            <p>Items in Cart</p>
-          </article>
-          <article>
-            <h2>{isMockMode() ? 'Mock' : 'Live'}</h2>
-            <p>API Mode</p>
-          </article>
-        </div>
         <div className="hero-actions">
           <button type="button" className="cart-trigger" onClick={() => setIsCartOpen(true)}>
             Cart ({cart.items.reduce((sum, item) => sum + item.qty, 0)})
