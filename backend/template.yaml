@@ -2,6 +2,18 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: ecommerce-demo backend - API Gateway + Lambda + DynamoDB
 
+Parameters:
+  CloudFrontDomainName:
+    Type: String
+    Default: d3ama07cq01ab6.cloudfront.net
+    Description: CloudFront domain used to build product image URLs.
+  ProductImageUploadsBucketName:
+    Type: String
+    Description: Globally unique S3 bucket name for raw uploaded product images.
+  ProductImagesBucketName:
+    Type: String
+    Description: Globally unique S3 bucket name for optimized product images.
+
 Globals:
   Function:
     Runtime: nodejs22.x
@@ -84,6 +96,82 @@ Resources:
             Path: /orders/{orderId}
             Method: GET
 
+  ProductImageUploadsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref ProductImageUploadsBucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+  ProductImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref ProductImagesBucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+  SharpLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: ecommerce-demo-sharp
+      Description: Sharp native dependency for image optimization
+      ContentUri: layers/sharp
+      CompatibleRuntimes:
+        - nodejs22.x
+      RetentionPolicy: Delete
+    Metadata:
+      BuildMethod: nodejs22.x
+
+  ImageOptimizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/image-optimizer.handler
+      Timeout: 30
+      MemorySize: 1024
+      Layers:
+        - !Ref SharpLayer
+      Environment:
+        Variables:
+          TARGET_BUCKET: !Ref ProductImagesBucket
+          CLOUDFRONT_DOMAIN_NAME: !Ref CloudFrontDomainName
+          PNG_COMPRESSION_LEVEL: '9'
+          WEBP_QUALITY: '82'
+          MAX_IMAGE_WIDTH: '1600'
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProductsTable
+        - Statement:
+            - Sid: ReadFromUploadBucket
+              Effect: Allow
+              Action:
+                - s3:GetObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProductImageUploadsBucketName}/products/*
+            - Sid: WriteToPublishBucket
+              Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource: !Sub arn:${AWS::Partition}:s3:::${ProductImagesBucketName}/products/*
+      Events:
+        OptimizeUploadedPng:
+          Type: S3
+          Properties:
+            Bucket: !Ref ProductImageUploadsBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: products/
+                  - Name: suffix
+                    Value: .png
+
   ProductsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -130,3 +218,15 @@ Outputs:
 
   OrdersTableName:
     Value: !Ref OrdersTable
+
+  ProductImageUploadBucketOutputName:
+    Description: Upload source bucket for raw product images.
+    Value: !Ref ProductImageUploadsBucket
+
+  ProductImagesBucketOutputName:
+    Description: CloudFront origin bucket for optimized product images.
+    Value: !Ref ProductImagesBucket
+
+  ProductImagesCloudFrontBaseUrl:
+    Description: Base CloudFront URL used in product records.
+    Value: !Sub https://${CloudFrontDomainName}
