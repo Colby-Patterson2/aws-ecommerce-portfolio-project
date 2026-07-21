@@ -41,7 +41,12 @@ export default function CatalogPanel({
         <div className="product-grid">
           {visibleProducts.map((product) => (
             <article className="product-card" key={product.id}>
-              <img src={product.imageUrl} alt={product.name} loading="lazy" />
+              <picture>
+                {product.imageUrlWebp ? (
+                  <source srcSet={product.imageUrlWebp} type="image/webp" />
+                ) : null}
+                <img src={product.imageUrl} alt={product.name} loading="lazy" />
+              </picture>
               <div className="card-body">
                 <p className="category">{product.category}</p>
                 <h3>{product.name}</h3>
