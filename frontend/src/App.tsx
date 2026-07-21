@@ -219,7 +219,6 @@ function App() {
 
       <footer className="footnote">
         <p>Session: {sessionId}</p>
-        <p>{isMockMode() ? 'Using local mock API mode.' : 'Connected to live AWS API.'}</p>
       </footer>
     </div>
   )
