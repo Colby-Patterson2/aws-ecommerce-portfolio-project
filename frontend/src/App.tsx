@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import {
+  ApiError,
   addToCart,
   checkout,
   getCart,
@@ -16,6 +17,42 @@ import './App.css'
 
 const SESSION_KEY = 'ecommerce-demo-session'
 const ADDED_LABEL_DURATION_MS = 3000
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.code === 'OUT_OF_STOCK') {
+      const details = error.details as
+        | { productId?: string; availableQty?: number; requestedQty?: number }
+        | undefined
+
+      if (details?.productId && Number.isFinite(details.availableQty)) {
+        return `Only ${details.availableQty} item(s) of ${details.productId} are available.`
+      }
+
+      return error.message
+    }
+
+    if (error.code === 'PRODUCT_NOT_FOUND') {
+      return 'This product is no longer available.'
+    }
+
+    if (error.code === 'CART_EMPTY') {
+      return 'Your cart is empty.'
+    }
+
+    if (error.code === 'STOCK_CONFLICT') {
+      return 'Inventory changed while checking out. Refresh your cart and try again.'
+    }
+
+    return error.message
+  }
+
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return 'Something went wrong. Please try again.'
+}
 
 function getSessionId(): string {
   const saved = localStorage.getItem(SESSION_KEY)
@@ -103,7 +140,6 @@ function App() {
       const updatedCart = await addToCart(sessionId, {
         productId: product.id,
         qty: 1,
-        price: product.price,
       })
       setCart(updatedCart)
 
@@ -133,7 +169,7 @@ function App() {
 
       addedLabelTimersRef.current.set(product.id, timerId)
     } catch (addError) {
-      setError(addError instanceof Error ? addError.message : 'Failed to add item.')
+      setError(toErrorMessage(addError))
     }
   }
 
@@ -143,9 +179,7 @@ function App() {
       const updatedCart = await removeFromCart(sessionId, productId)
       setCart(updatedCart)
     } catch (removeError) {
-      setError(
-        removeError instanceof Error ? removeError.message : 'Failed to remove item.',
-      )
+      setError(toErrorMessage(removeError))
     }
   }
 
@@ -159,11 +193,7 @@ function App() {
       setIsCartOpen(false)
       navigate(`/order/${order.orderId}`, { state: { order } })
     } catch (checkoutError) {
-      setError(
-        checkoutError instanceof Error
-          ? checkoutError.message
-          : 'Checkout failed. Try again.',
-      )
+      setError(toErrorMessage(checkoutError))
     } finally {
       setIsCheckingOut(false)
     }
