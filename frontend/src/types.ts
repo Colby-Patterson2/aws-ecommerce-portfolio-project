@@ -15,6 +15,11 @@ export type CartItem = {
   price: number
 }
 
+export type CartItemInput = {
+  productId: string
+  qty: number
+}
+
 export type Cart = {
   sessionId: string
   items: CartItem[]
@@ -26,6 +31,7 @@ export type Order = {
   sessionId: string
   items: CartItem[]
   total: number
-  status: 'confirmed'
+  status: 'confirmed' | 'failed' | 'refunded'
   createdAt: string
+  confirmationCode?: string
 }

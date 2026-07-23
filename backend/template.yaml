@@ -3,6 +3,10 @@ Transform: AWS::Serverless-2016-10-31
 Description: ecommerce-demo backend - API Gateway + Lambda + DynamoDB
 
 Parameters:
+  FrontendOrigin:
+    Type: String
+    Default: '*'
+    Description: Allowed frontend origin for API CORS. Use comma-separated values for multiple origins.
   CloudFrontDomainName:
     Type: String
     Default: d3ama07cq01ab6.cloudfront.net
@@ -24,6 +28,7 @@ Globals:
         PRODUCTS_TABLE: !Ref ProductsTable
         CARTS_TABLE: !Ref CartsTable
         ORDERS_TABLE: !Ref OrdersTable
+        FRONTEND_ORIGIN: !Ref FrontendOrigin
 
 Resources:
   EcommerceApi:
@@ -36,9 +41,11 @@ Resources:
           - DELETE
           - OPTIONS
         AllowOrigins:
-          - '*'
+          - !Ref FrontendOrigin
         AllowHeaders:
-          - '*'
+          - content-type
+          - x-requested-with
+          - authorization
 
   ApiFunction:
     Type: AWS::Serverless::Function
