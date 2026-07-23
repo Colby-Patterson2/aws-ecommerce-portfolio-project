@@ -51,7 +51,7 @@ function response(requestId, requestOrigin, statusCode, body) {
       'content-type': 'application/json',
       'x-request-id': requestId,
       'access-control-allow-origin': resolveCorsOrigin(requestOrigin),
-      'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS',
+      'access-control-allow-methods': 'GET,POST,PATCH,DELETE,OPTIONS',
       'access-control-allow-headers': 'content-type,x-requested-with,authorization',
       vary: 'origin',
     },
